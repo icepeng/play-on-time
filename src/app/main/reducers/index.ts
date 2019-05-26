@@ -61,6 +61,6 @@ export const getHistoryEntitiesState = createSelector(
 export const {
   selectIds: getHistoryIds,
   selectEntities: getHistoryEntities,
-  selectAll: getAllHistorys,
-  selectTotal: getTotalHistorys,
+  selectAll: getAllHistories,
+  selectTotal: getTotalHistories,
 } = fromHistories.adapter.getSelectors(getHistoryEntitiesState);

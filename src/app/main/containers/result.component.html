@@ -1,5 +1,31 @@
 <div class="content-container">
   <div class="content-area">
     <h1>Result</h1>
+    <form [formGroup]="formGroup">
+      <select clrSelect formControlName="historyType">
+        <option value="출근">출근</option>
+        <option value="퇴근">퇴근</option>
+      </select>
+      <select clrSelect formControlName="playerName">
+        <option *ngFor="let player of players$ | async" [value]="player.name">{{
+          player.name
+        }}</option>
+      </select>
+    </form>
+    <clr-datagrid>
+      <clr-dg-column>일자</clr-dg-column>
+      <clr-dg-column>출근시각</clr-dg-column>
+      <clr-dg-column>지각여부</clr-dg-column>
+
+      <clr-dg-row *ngFor="let history of results$ | async">
+        <clr-dg-cell>{{ history.datetime | date:'yyyy-MM-dd' }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.datetime | date:'HH:mm:ss' }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.status }}</clr-dg-cell>
+      </clr-dg-row>
+
+      <clr-dg-footer
+        >{{ (results$ | async).length }} users</clr-dg-footer
+      >
+    </clr-datagrid>
   </div>
 </div>

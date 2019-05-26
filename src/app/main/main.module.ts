@@ -7,6 +7,9 @@ import { reducers } from './reducers';
 import { UploadPlayerComponent } from './containers/upload-player.component';
 import { UploadHistoryComponent } from './containers/upload-history.component';
 import { UploadVacationComponent } from './containers/upload-vacation.component';
+import { RouterModule } from '@angular/router';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ClarityModule } from '@clr/angular';
 
 @NgModule({
   declarations: [
@@ -16,6 +19,13 @@ import { UploadVacationComponent } from './containers/upload-vacation.component'
     UploadHistoryComponent,
     UploadVacationComponent,
   ],
-  imports: [CommonModule, StoreModule.forFeature('main', reducers)],
+  imports: [
+    CommonModule,
+    ClarityModule,
+    RouterModule,
+    FormsModule,
+    ReactiveFormsModule,
+    StoreModule.forFeature('main', reducers),
+  ],
 })
 export class MainModule {}
