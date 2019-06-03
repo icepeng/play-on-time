@@ -4,10 +4,6 @@ export interface Vacation {
   id: string;
   playerName: string;
   email: string;
-  date: {
-    year: number;
-    month: number;
-    day: number;
-  };
+  date: Date;
   type: VacationType;
 }

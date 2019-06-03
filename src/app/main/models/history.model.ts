@@ -4,12 +4,5 @@ export interface History {
   id: string;
   type: HistoryType;
   playerName: string;
-  datetime: {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-    second: number;
-  };
+  datetime: Date;
 }

@@ -3,17 +3,7 @@ import * as XLSX from 'xlsx';
 import { Player } from '../models/player.model';
 import { History, HistoryType } from '../models/history.model';
 import { Vacation, VacationType } from '../models/vacation.model';
-import {
-  parse,
-  getYear,
-  getMonth,
-  getDate,
-  getHours,
-  getMinutes,
-  getSeconds,
-  isBefore,
-  addDays,
-} from 'date-fns';
+import { parse, setHours, setMinutes, isBefore, addDays } from 'date-fns';
 
 @Injectable({
   providedIn: 'root',
@@ -33,57 +23,48 @@ export class ExcelService {
     return XLSX.utils.sheet_to_json(ws, { header: 1 }) as string[][];
   }
 
+  export(input: string[][]) {
+    const ws = XLSX.utils.aoa_to_sheet(input);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+    return XLSX.writeFile(wb, 'result.xlsx');
+  }
+
   toPlayers(input: string[][]): Player[] {
     const [_header, ...data] = input;
-    return data.map<Player>(([name, time]) => {
+    return data.map<Player>(([name, unit, time]) => {
       const [hour, minute] = time.split(':');
       return {
         id: name,
         name,
-        workingTime: {
-          hour: +hour,
-          minute: +minute,
-        },
+        unit,
+        workingTime: setMinutes(setHours(new Date(0), +hour), +minute),
       };
     });
   }
 
   toHistories(input: string[][]): History[] {
     const [_header, ...data] = input;
-    return data.map<History>(([dateStr, , name, , , , type]) => {
-      const date = parse(dateStr);
-      return {
-        id: name + '_' + type + '_' + dateStr,
-        type: type as HistoryType,
-        playerName: name,
-        datetime: {
-          year: getYear(date),
-          month: getMonth(date),
-          day: getDate(date),
-          hour: getHours(date),
-          minute: getMinutes(date),
-          second: getSeconds(date),
-        },
-      };
-    });
+    return data
+      .filter(([, , , , , , type]) => !!type)
+      .map<History>(([dateStr, , name, , , , type]) => {
+        return {
+          id: name + '_' + type + '_' + dateStr,
+          type: type as HistoryType,
+          playerName: name,
+          datetime: parse(dateStr),
+        };
+      });
   }
 
-  private splitDate(startDate: string, endDate: string) {
-    function toDateObj(date: Date) {
-      return {
-        year: getYear(date),
-        month: getMonth(date),
-        day: getDate(date),
-      };
-    }
-
+  splitDate(startDate: string, endDate: string) {
     let start = parse(startDate);
     const end = parse(endDate);
-    const arr = [toDateObj(start)];
+    const arr = [start];
 
     while (isBefore(start, end)) {
       start = addDays(start, 1);
-      arr.push(toDateObj(start));
+      arr.push(start);
     }
 
     return arr;

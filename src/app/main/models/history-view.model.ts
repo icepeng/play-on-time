@@ -1,4 +1,12 @@
+import { HistoryType } from './history.model';
+import { VacationType } from './vacation.model';
+
 export interface HistoryView {
-    datetime: string;
-    status: '정상출근' | '지각';
+  datetime: Date;
+  unit: string;
+  playerName: string;
+  workingTime: Date;
+  type: HistoryType;
+  vacationType?: VacationType;
+  status: '정시' | '지각' | '조퇴' | '연차';
 }

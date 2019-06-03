@@ -2,30 +2,37 @@
   <div class="content-area">
     <h1>Result</h1>
     <form [formGroup]="formGroup">
-      <select clrSelect formControlName="historyType">
-        <option value="출근">출근</option>
-        <option value="퇴근">퇴근</option>
-      </select>
-      <select clrSelect formControlName="playerName">
-        <option *ngFor="let player of players$ | async" [value]="player.name">{{
-          player.name
-        }}</option>
-      </select>
+      <input clrDate formControlName="startDate" />
+      <input clrDate formControlName="endDate" />
     </form>
+    <button (click)="download$.next('')" class="btn btn-primary" [disabled]="formGroup.invalid">엑셀로 다운로드</button>
     <clr-datagrid>
-      <clr-dg-column>일자</clr-dg-column>
-      <clr-dg-column>출근시각</clr-dg-column>
-      <clr-dg-column>지각여부</clr-dg-column>
+      <clr-dg-column clrDgField="workingTime">일자</clr-dg-column>
+      <clr-dg-column clrDgField="unit">유닛명</clr-dg-column>
+      <clr-dg-column clrDgField="playerName">사원명</clr-dg-column>
+      <clr-dg-column clrDgField="type">출/퇴</clr-dg-column>
+      <clr-dg-column>지정시각</clr-dg-column>
+      <clr-dg-column>인증시각</clr-dg-column>
+      <clr-dg-column clrDgField="vacationType">휴가여부</clr-dg-column>
+      <clr-dg-column clrDgField="status">지각여부</clr-dg-column>
 
-      <clr-dg-row *ngFor="let history of results$ | async">
-        <clr-dg-cell>{{ history.datetime | date:'yyyy-MM-dd' }}</clr-dg-cell>
-        <clr-dg-cell>{{ history.datetime | date:'HH:mm:ss' }}</clr-dg-cell>
+      <clr-dg-row *clrDgItems="let history of results$ | async">
+        <clr-dg-cell>{{ history.workingTime | date: 'yyyy-MM-dd' }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.unit }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.playerName }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.type }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.workingTime | date: 'HH:mm:ss' }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.datetime | date: 'yyyy-MM-dd HH:mm:ss' }}</clr-dg-cell>
+        <clr-dg-cell>{{ history.vacationType }}</clr-dg-cell>
         <clr-dg-cell>{{ history.status }}</clr-dg-cell>
       </clr-dg-row>
 
-      <clr-dg-footer
-        >{{ (results$ | async).length }} users</clr-dg-footer
-      >
+      <clr-dg-footer>
+        <clr-dg-pagination #pagination [clrDgPageSize]="20">
+          <clr-dg-page-size [clrPageSizeOptions]="[10, 20, 50, 100]">Histories per page</clr-dg-page-size>
+          {{ pagination.firstItem + 1 }} - {{ pagination.lastItem + 1 }} of {{ pagination.totalItems }} histories
+        </clr-dg-pagination>
+      </clr-dg-footer>
     </clr-datagrid>
   </div>
 </div>
