@@ -55,6 +55,10 @@ export class ResultComponent implements OnInit {
       this.formGroup.valueChanges.pipe(startWith(this.formGroup.value)),
     ]).pipe(
       map(([histories, players, vacations, { startDate, endDate }]) => {
+        if (!startDate || !endDate) {
+          return [];
+        }
+
         const workingDays = this.splitDate(startDate, endDate);
         return players
           .map(player => {
