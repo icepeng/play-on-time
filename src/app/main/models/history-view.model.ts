@@ -8,5 +8,5 @@ export interface HistoryView {
   workingTime: Date;
   type: HistoryType;
   vacationType?: VacationType;
-  status: '정시' | '지각' | '조퇴' | '연차';
+  status: '정시' | '지각' | '조퇴' | '안찍음' | '연차';
 }
