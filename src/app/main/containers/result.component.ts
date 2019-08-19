@@ -24,10 +24,10 @@ import {
 } from 'date-fns';
 import { combineLatest, Observable, Subject } from 'rxjs';
 import { map, startWith, withLatestFrom } from 'rxjs/operators';
-import { HistoryView } from '../models/history-view.model';
+import { HistoryStatus, HistoryView } from '../models/history-view.model';
 import { History } from '../models/history.model';
 import { Player } from '../models/player.model';
-import { Vacation } from '../models/vacation.model';
+import { Vacation, VacationType } from '../models/vacation.model';
 import * as fromMain from '../reducers';
 import { ExcelService } from '../services/excel.service';
 
@@ -96,14 +96,29 @@ export class ResultComponent implements OnInit {
     return [...arr, ...x];
   }
 
-  private getStartHistoryView(histories: History[], vacations: Vacation[], player: Player, day: Date): HistoryView {
-    const history = histories
-      .filter(h => h.type === '출근' && this.isDateEqual(h.datetime, day))
-      .sort((a, b) => a.datetime.getTime() - b.datetime.getTime())[0];
+  private getHistoryView({
+    histories,
+    vacations,
+    player,
+    day,
+    historySelector,
+    getWorkingTime,
+    getStatus,
+  }: {
+    histories: History[];
+    vacations: Vacation[];
+    player: Player;
+    day: Date;
+    historySelector: (history: History) => boolean;
+    getWorkingTime: (workingStartTime: Date, vacationType: VacationType) => Date;
+    getStatus: (workingTime: Date, vacationType: VacationType, history: History) => HistoryStatus;
+  }): HistoryView {
+    const history = histories.filter(historySelector).sort((a, b) => a.datetime.getTime() - b.datetime.getTime())[0];
     const vacation = vacations.find(x => x.playerName === player.name && this.isDateEqual(x.date, day));
     const vacationType = vacation ? vacation.type : undefined;
     const workingStartTime = this.overrideTime(day, player.workingTime);
-    const workingTime = vacationType === '오전반차' ? this.getStartTimePM(workingStartTime) : workingStartTime;
+    const workingTime = getWorkingTime(workingStartTime, vacationType);
+    const status = getStatus(workingTime, vacationType, history);
 
     return {
       datetime: history ? history.datetime : day,
@@ -112,7 +127,20 @@ export class ResultComponent implements OnInit {
       unit: player.unit,
       workingTime,
       vacationType,
-      status:
+      status,
+    };
+  }
+
+  private getStartHistoryView(histories: History[], vacations: Vacation[], player: Player, day: Date): HistoryView {
+    return this.getHistoryView({
+      histories,
+      vacations,
+      player,
+      day,
+      historySelector: h => h.type === '출근' && this.isDateEqual(h.datetime, day),
+      getWorkingTime: (workingStartTime, vacationType) =>
+        vacationType === '오전반차' ? this.getStartTimePM(workingStartTime) : workingStartTime,
+      getStatus: (workingTime, vacationType, history) =>
         vacationType === '연차'
           ? '연차'
           : history
@@ -120,27 +148,19 @@ export class ResultComponent implements OnInit {
             ? '정시'
             : '지각'
           : '안찍음',
-    };
+    });
   }
 
   private getEndHistoryView(histories: History[], vacations: Vacation[], player: Player, day: Date): HistoryView {
-    const history = histories
-      .filter(h => h.type === '퇴근' && this.isDateEqual(this.shiftTime(h.datetime, player), day))
-      .sort((a, b) => b.datetime.getTime() - a.datetime.getTime())[0];
-    const vacation = vacations.find(x => x.playerName === player.name && this.isDateEqual(x.date, day));
-    const vacationType = vacation ? vacation.type : undefined;
-    const workingStartTime = this.overrideTime(day, player.workingTime);
-    const workingTime =
-      vacationType === '오후반차' ? this.getEndTimeAM(workingStartTime) : this.getEndTime(workingStartTime);
-
-    return {
-      datetime: history ? history.datetime : day,
-      playerName: player.name,
-      type: '퇴근',
-      unit: player.unit,
-      workingTime,
-      vacationType,
-      status:
+    return this.getHistoryView({
+      histories,
+      vacations,
+      player,
+      day,
+      historySelector: h => h.type === '퇴근' && this.isDateEqual(this.shiftTime(h.datetime, player), day),
+      getWorkingTime: (workingStartTime, vacationType) =>
+        vacationType === '오후반차' ? this.getEndTimeAM(workingStartTime) : this.getEndTime(workingStartTime),
+      getStatus: (workingTime, vacationType, history) =>
         vacationType === '연차'
           ? '연차'
           : history
@@ -148,7 +168,7 @@ export class ResultComponent implements OnInit {
             ? '정시'
             : '조퇴'
           : '안찍음',
-    };
+    });
   }
 
   private splitDate(startDate: Date, endDate: Date) {
@@ -193,6 +213,7 @@ export class ResultComponent implements OnInit {
     return getYear(a) === getYear(b) && getMonth(a) === getMonth(b) && getDate(a) === getDate(b);
   }
 
+  // 일반 퇴근
   private getEndTime(workingStartTime: Date) {
     return addMinutes(addHours(workingStartTime, 9), 30);
   }
